@@ -82,8 +82,6 @@ ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
 EOF
 
-
-
 # default bashrc
 cat > ./root/root/.bashrc <<"EOF"
 # If not running interactively, don't do anything
@@ -98,6 +96,10 @@ uap='pacman --sync --sysupgrade --refresh'
 
 export PS1='\u@\h:\w$(__git_ps1 " (%s)")\$ '
 EOF
+
+# checkout after installation scripts
+mkdir ./root/root/workspace
+git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
 
 
 # umount partitions and remove old files
