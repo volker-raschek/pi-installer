@@ -1,0 +1,2 @@
+# PI-Installer
+PI-Installer is a collection of scripts for the automatic installation of Raspberry pis on different distributions. It contains scripts for the installation as well as for the further setup of the environment.
