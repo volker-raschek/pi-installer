@@ -62,6 +62,7 @@ sync
 mv ./root/boot/* ./boot
 
 # install ssh pub key
+mkdir ./root/root/.ssh -p
 cat > ./root/root/.ssh/authorized_keys <<EOF
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPOydCxv9/tAV7AdS2HsUIEu547Z5qUJnWYwiO7rI9YL
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUTcUBb+55jRY9TkpLgm8K/8nJfEXyjEX8zljdCCRpi
@@ -70,6 +71,7 @@ EOF
 
 chown root:root -R ./root/root/.ssh/authorized_keys
 chmod 640 ./root/root/.ssh/authorized_keys
+chmod 750 ./root/root/.ssh
 
 # set hosts
 cat > ./root/etc/hosts <<EOF
