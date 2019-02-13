@@ -4,6 +4,11 @@
 # and set the appropriate symbolic link. Checkout vim konfiguration
 # without plugins.
 git clone https://git.cryptic.systems/volker.raschek/vim.git ${HOME}/workspace/vim
+
+if [ -f ${HOME}/.vimrc ]; then
+  rm ${HOME}/.vimrc
+fi
+
 ln -s ${HOME}/workspace/vim/vimrc ${HOME}/.vimrc
 
 cd ${HOME}/workspace/vim
