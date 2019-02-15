@@ -1,13 +1,6 @@
 #!/bin/bash
 
-FILE=$HOME/.git
-
-if [ ! -z ${XDG_DATA_HOME+x} ]; then
-  mkdir ${XDG_DATA_HOME}/bash -p
-  FILE=${XDG_DATA_HOME}/bash/git
-fi
-
-cat > ${FILE} <<"EOF"
+cat > ${XDG_DATA_HOME}/bash/git <<"EOF"
 # bash/zsh git prompt support
 #
 # Copyright (C) 2006,2007 Shawn O. Pearce <spearce@spearce.org>
@@ -545,14 +538,4 @@ __git_ps1 ()
 EOF
 
 # git: set environment variables
-cat >> ${HOME}/.bashrc <<EOF
-
-[ -f "${FILE}" ] && source "${FILE}"
-export GIT_PS1_SHOWDIRTYSTATE=" "
-export GIT_PS1_SHOWSTASHSTATE=" "
-export GIT_PS1_SHOWUNTRACKEDFILES=" "
-export GIT_PS1_SHOWUPSTREAM=" "
-EOF
-
-# git: source new environment variables
-source ${HOME}/.bashrc
+sed -i 's#\\u@\\h:\\w$ #\\u@\\h:\\w$(__git_ps1 " (%s)")\\$ #' ${HOME}/.bashrc
