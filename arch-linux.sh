@@ -100,7 +100,7 @@ shopt -s globstar
 shopt -s histappend
 
 # Aliases
-uap='pacman --sync --sysupgrade --refresh'
+alias uap='pacman --sync --sysupgrade --refresh'
 
 export PS1='\u@\h:\w$(__git_ps1 " (%s)")\$ '
 EOF
