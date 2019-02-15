@@ -84,7 +84,13 @@ ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
 EOF
 
-# default bashrc
+
+# default bash_profile for login-shells
+cat > ./root/root/.bash_profile <<EOF
+[[ -f ~/.bashrc ]] && . ~/.bashrc
+EOF
+
+# default bashrc used for sub-shells
 cat > ./root/root/.bashrc <<"EOF"
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
