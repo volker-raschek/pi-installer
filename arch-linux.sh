@@ -61,6 +61,11 @@ sync
 # move bootloader
 mv ./root/boot/* ./boot
 
+# enable 1-wire interface
+cat >> ./boot/config.txt <<EOF
+dtoverlay=w1-gpio
+EOF
+
 # install ssh pub key
 mkdir ./root/root/.ssh -p
 cat > ./root/root/.ssh/authorized_keys <<EOF
@@ -108,7 +113,6 @@ EOF
 # checkout after installation scripts
 mkdir ./root/root/workspace
 git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
-
 
 # umount partitions and remove old files
 umount ${BOOT} ${ROOT}
