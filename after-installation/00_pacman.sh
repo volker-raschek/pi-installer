@@ -22,10 +22,10 @@ Server = https://xyne.archlinux.ca/repos/xyne
 EOF
 
 # pacman: sysupgrade
-pacman --sync --refresh --sysupgrade
+pacman --sync --refresh --sysupgrade --noconfirm
 
 # pacman: install pkgs
-pacman --sync --noconfirm bash-completion git pacman-contrib reflector vim
+pacman --sync --noconfirm bash-completion bind-tools git pacman-contrib reflector vim
 
 # pacman: hooks directory
 mkdir /etc/pacman.d/hooks
