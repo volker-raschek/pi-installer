@@ -539,3 +539,6 @@ EOF
 
 # git: set environment variables
 sed -i 's#\\u@\\h:\\w$ #\\u@\\h:\\w$(__git_ps1 " (%s)")\\$ #' ${HOME}/.bashrc
+
+git config --global user.name "root"
+git config --global user.email "root@$(hostname -f)"
