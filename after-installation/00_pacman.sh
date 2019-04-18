@@ -31,7 +31,7 @@ pacman --sync --noconfirm bash-completion bind-tools git pacman-contrib reflecto
 mkdir /etc/pacman.d/hooks
 
 # pacman: paccache hook
-cat > /etc/pacman.d/paccache.hook <<EOF
+cat > /etc/pacman.d/hooks/paccache.hook <<EOF
 [Trigger]
 Operation = Remove
 Operation = Install
@@ -46,7 +46,7 @@ Exec = /usr/bin/paccache -rvk3
 EOF
 
 # pacman: reflector hook
-cat > /etc/pacman.d/reflector.hook <<EOF
+cat > /etc/pacman.d/hooks/reflector.hook <<EOF
 [Trigger]
 Operation = Upgrade
 Type = Package
