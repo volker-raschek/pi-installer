@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pacman --sync --noconfirm git
+
 cat > ${XDG_DATA_HOME}/bash/git <<"EOF"
 # bash/zsh git prompt support
 #

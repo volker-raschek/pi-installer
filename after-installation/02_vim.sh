@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pacman --sync --noconfirm vim
+
 # Checkout the repository that contains the VIM configuration
 # and set the appropriate symbolic link. Checkout vim konfiguration
 # without plugins.

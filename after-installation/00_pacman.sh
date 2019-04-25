@@ -26,7 +26,7 @@ pacman-key --lsign-key EC3CBE7F607D11E663149E811D1F0DC78F173680
 pacman --sync --refresh --sysupgrade --noconfirm
 
 # pacman: install pkgs
-pacman --sync --noconfirm bash-completion bind-tools git pacman-contrib reflector vim
+pacman --sync --noconfirm bash-completion bind-tools pacman-contrib
 
 # pacman: hooks directory
 mkdir /etc/pacman.d/hooks
@@ -47,18 +47,19 @@ Exec = /usr/bin/paccache -rvk3
 EOF
 
 # pacman: reflector hook
-cat > /etc/pacman.d/hooks/reflector.hook <<EOF
-[Trigger]
-Operation = Upgrade
-Type = Package
-Target = pacman-mirrorlist
+# dependancies: need xyne repository
+# cat > /etc/pacman.d/hooks/reflector.hook <<EOF
+# [Trigger]
+# Operation = Upgrade
+# Type = Package
+# Target = pacman-mirrorlist
 
-[Action]
-Description = Updating pacman-mirrorlist with reflactor and removing pacnew
-When = PostTransaction
-Depends = reflector
-Exec = /bin/sh -c "reflector --verbose --latest 10 --sort rate --protocol https --country Germany --save /etc/pacman.d/mirrorlist; rm -f /etc/pacman.d/mirrorlist.pacnew"
-EOF
+# [Action]
+# Description = Updating pacman-mirrorlist with reflactor and removing pacnew
+# When = PostTransaction
+# Depends = reflector
+# Exec = /bin/sh -c "reflector --verbose --latest 10 --sort rate --protocol https --country Germany --save /etc/pacman.d/mirrorlist; rm -f /etc/pacman.d/mirrorlist.pacnew"
+# EOF
 
 # pacman: enable hooks
 sed -i -E 's@^#(HookDir.*)@\1@' /etc/pacman.conf
