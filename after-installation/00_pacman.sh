@@ -12,6 +12,7 @@ pacman-key --lsign-key EC3CBE7F607D11E663149E811D1F0DC78F173680
 
 # pacman: add reflector developer repository
 # cat >> /etc/pacman.conf <<EOF
+#
 # [xyne-any]
 # # A repo for Xyne's own projects: https://xyne.archlinux.ca/projects/
 # # Packages for "any" architecture.
