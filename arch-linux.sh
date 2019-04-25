@@ -9,8 +9,8 @@ DEVICE=/dev/sdb
 BOOT="${DEVICE}1"
 ROOT="${DEVICE}2"
 
-PI_HOSTNAME="poseidon"
-PI_FQDN="poseidon.trier.cryptic.systems"
+PI_HOSTNAME="tartaros"
+PI_FQDN="tartaros.trier.cryptic.systems"
 
 # Arch Linux Image
 TARBALL=ArchLinuxARM-rpi-latest.tar.gz
@@ -35,12 +35,12 @@ gpg --verify ${TARBALL_SIG} ${TARBALL}
 
 # delete partitions on sd-card
 for p in $(parted -s $DEVICE print|awk '/^ / {print $1}'); do
-  parted --script  $DEVICE rm $p
+  parted --script $DEVICE rm $p
 done
 
 # partitioning sd-card
 parted --script $DEVICE mkpart primary fat32 1MiB 100MiB
-parted --script $DEVICE mkpart primary ext4  100Mib 100%
+parted --script $DEVICE mkpart primary ext4 100Mib 100%
 
 # create file systems
 mkfs.vfat ${BOOT}
@@ -84,13 +84,9 @@ chmod 750 ./root/root/.ssh
 
 # set hosts
 cat > ./root/etc/hosts <<EOF
-127.0.0.1       ${PI_HOSTNAME}
-127.0.1.1       ${PI_FQDN}  ${PI_HOSTNAME}
-
-# The following lines are desirable for IPv6 capable hosts
-::1             ${PI_HOSTNAME} ip6-localhost ip6-loopback
-ff02::1         ip6-allnodes
-ff02::2         ip6-allrouters
+127.0.0.1       localdomain.localhost localdomain
+::1             localdomain.localhost localdomain
+127.0.1.1       ${PI_FQDN} ${PI_HOSTNAME}
 EOF
 
 
