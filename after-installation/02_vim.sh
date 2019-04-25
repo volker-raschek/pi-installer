@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 pacman --sync --noconfirm vim
 
 # Checkout the repository that contains the VIM configuration

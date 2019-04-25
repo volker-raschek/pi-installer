@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 pacman --sync --noconfirm git
 
 cat > ${XDG_DATA_HOME}/bash/git <<"EOF"
