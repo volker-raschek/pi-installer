@@ -11,15 +11,15 @@ pacman-key --recv-key EC3CBE7F607D11E663149E811D1F0DC78F173680
 pacman-key --lsign-key EC3CBE7F607D11E663149E811D1F0DC78F173680
 
 # pacman: add reflector developer repository
-cat >> /etc/pacman.conf <<EOF
-[xyne-any]
-# A repo for Xyne's own projects: https://xyne.archlinux.ca/projects/
-# Packages for "any" architecture.
-# Use this repo only if there is no matching [xyne-*] repo for your architecture.
-SigLevel = Required
-Server = https://xyne.archlinux.ca/repos/xyne
+# cat >> /etc/pacman.conf <<EOF
+# [xyne-any]
+# # A repo for Xyne's own projects: https://xyne.archlinux.ca/projects/
+# # Packages for "any" architecture.
+# # Use this repo only if there is no matching [xyne-*] repo for your architecture.
+# SigLevel = Required
+# Server = https://xyne.archlinux.ca/repos/xyne
 
-EOF
+# EOF
 
 # pacman: sysupgrade
 pacman --sync --refresh --sysupgrade --noconfirm

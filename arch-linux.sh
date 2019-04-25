@@ -89,6 +89,10 @@ cat > ./root/etc/hosts <<EOF
 127.0.1.1       ${PI_FQDN} ${PI_HOSTNAME}
 EOF
 
+# set hostname
+cat > ./root/etc/hostname <<EOF
+${PI_HOSTNAME}
+EOF
 
 # default bash_profile for login-shells
 cat > ./root/root/.bash_profile <<EOF

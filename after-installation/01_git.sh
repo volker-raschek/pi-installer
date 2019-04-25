@@ -538,7 +538,7 @@ __git_ps1 ()
 EOF
 
 # git: set environment variables
-sed -i 's#\\u@\\h:\\w$ #\\u@\\h:\\w$(__git_ps1 " (%s)")\\$ #' ${HOME}/.bashrc
+sed -i 's#PS1=\x27\\u@\\h:\\w\\$ \x27#PS1=\x27\\u@\\h:\\w$(__git_ps1 \" (%s)\")\\$ \x27#' ${HOME}/.bashrc
 
-git config --global user.name "root"
-git config --global user.email "root@$(hostname -f)"
+git config --global user.name "${USER}"
+git config --global user.email "${USER}@$(hostname -f)"
