@@ -170,6 +170,11 @@ mkdir -p ./root/root/.cache/less \
          ./root/root/.local/share \
          ./root/root/.local/share/bash
 
+
+# set permissions for gnupg homedir
+chmod 700 ./root/root/.config/gnupg
+chown root:root ./root/root/.config/gnupg
+
 # download gpg public keys
 gpg --homedir ./root/root/.config/gnupg --recv-keys 9B146D11A9ED6CA7E279EB1A852BCC170D81A982
 
