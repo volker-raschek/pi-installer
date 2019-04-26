@@ -544,5 +544,21 @@ EOF
 # git: set environment variables
 sed -i 's#PS1=\x27\\u@\\h:\\w\\$ \x27#PS1=\x27\\u@\\h:\\w$(__git_ps1 \" (%s)\")\\$ \x27#' ${HOME}/.bashrc
 
+
+# Core-Settings
+git config --global core.eol lf
+[[ -f $(which vim) ]] && git config --global core.editor "vim -c 'set textwidth=72'"
+
+# User-Settings
 git config --global user.name "${USER}"
 git config --global user.email "${USER}@$(hostname -f)"
+
+# Help-Settings
+git config --global help.autocorrect 10
+
+# Aliases
+git config --global alias.lo "log --abbrev-commit --decorate --graph --histogram --all"
+git config --global alias.los "log --abbrev-commit --decorate --graph --histogram --all --show-signature"
+git config --global alias.loo "log --abbrev-commit --decorate --graph --histogram --all --oneline"
+git config --global alias.loos "log --abbrev-commit --decorate --graph --histogram --all --oneline --show-signature"
+git config --global alias.fixup "commit --amend --no-edit"
