@@ -66,9 +66,9 @@ sync
 mv ./root/boot/* ./boot
 
 # enable 1-wire interface
-cat >> ./boot/config.txt <<EOF
-dtoverlay=w1-gpio
-EOF
+# cat >> ./boot/config.txt <<EOF
+# dtoverlay=w1-gpio
+# EOF
 
 # install ssh pub key
 mkdir ./root/root/.ssh -p
@@ -84,8 +84,8 @@ chmod 750 ./root/root/.ssh
 
 # set hosts
 cat > ./root/etc/hosts <<EOF
-127.0.0.1       localdomain.localhost localdomain
-::1             localdomain.localhost localdomain
+127.0.0.1       localdomain.localhost localhost
+::1             localdomain.localhost localhost
 127.0.1.1       ${PI_FQDN} ${PI_HOSTNAME}
 EOF
 
@@ -159,7 +159,7 @@ alias uap='pacman --sync --refresh --sysupgrade'                          # Pacm
 alias uld='pacman --sync --refresh'                                       # Pacman: Update-Local-Database
 alias rao='pacman --remove --nosave --recursive \
            $(pacman --query --unrequired --deps --quiet) '                # Pacman: Remove-All-Orphans Packages
-alias rsp='pacman --remove --recursive --nosave'                          # Pacman: Remove-Single-Packahe
+alias rsp='pacman --remove --recursive --nosave'                          # Pacman: Remove-Single-Package
 EOF
 
 # create XDG-Specificantion-Based Directories
