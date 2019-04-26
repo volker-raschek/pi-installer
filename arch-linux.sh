@@ -3,14 +3,14 @@
 set -e
 
 # Device, define device for the new arch installation
-DEVICE=/dev/sdb
+DEVICE=/dev/sdd
 
 # boot and root partitions
 BOOT="${DEVICE}1"
 ROOT="${DEVICE}2"
 
-PI_HOSTNAME="tartaros"
-PI_FQDN="tartaros.trier.cryptic.systems"
+PI_HOSTNAME="dummy"
+PI_FQDN="dummy.trier.cryptic.systems"
 
 # Arch Linux Image
 TARBALL=ArchLinuxARM-rpi-latest.tar.gz
@@ -34,7 +34,7 @@ gpg --recv-keys ${TARBALL_SIG_KEY}
 gpg --verify ${TARBALL_SIG} ${TARBALL}
 
 # delete partitions on sd-card
-for p in $(parted -s $DEVICE print|awk '/^ / {print $1}'); do
+for p in $(parted --script $DEVICE print | awk '/^ / {print $1}'); do
   parted --script $DEVICE rm $p
 done
 
@@ -45,6 +45,10 @@ parted --script $DEVICE mkpart primary ext4 100Mib 100%
 # create file systems
 mkfs.vfat ${BOOT}
 mkfs.ext4 ${ROOT} -L root
+
+# read partition UUIDs
+BOOT_UUID=$(blkid --match-tag UUID --output value ${BOOT})
+ROOT_UUID=$(blkid --match-tag UUID --output value ${ROOT})
 
 # mount file systems
 if [ ! -d boot ]; then
@@ -64,6 +68,21 @@ sync
 
 # move bootloader
 mv ./root/boot/* ./boot
+
+# override partition name with partition uuid to find root partition
+CMD=$(cat ./boot/cmdline.txt)
+cat > ./boot/cmdline.txt <<EOF
+root=UUID=${ROOT_UUID} $(echo ${CMD} | cut -d ' ' -f 2-)
+EOF
+
+# override fstab to mount boot partition with uuid
+cat > ./root/etc/fstab <<EOF
+# Static information about the filesystems.
+# See fstab(5) for details.
+
+# <file system>                             <dir>       <type>  <options>  <dump>   <pass>
+UUID=${BOOT_UUID}                              /boot       vfat    defaults        0       0
+EOF
 
 # enable 1-wire interface
 # cat >> ./boot/config.txt <<EOF
