@@ -3,7 +3,7 @@
 set -e
 
 # Device, define device for the new arch installation
-DEVICE=/dev/sdd
+DEVICE=/dev/sdb
 
 # boot and root partitions
 BOOT="${DEVICE}1"
@@ -200,6 +200,10 @@ gpg --homedir ./root/root/.config/gnupg --recv-keys 9B146D11A9ED6CA7E279EB1A852B
 # checkout after installation scripts
 mkdir ./root/root/workspace
 git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
+
+# kill gpg-agent and dirmngr
+kill $(ps aux | grep dirmngr | awk '{print $2}')
+sudo kill $(ps aux | grep gpg-agent | awk '{print $2}')
 
 # umount partitions and remove old files
 umount ${BOOT} ${ROOT}
