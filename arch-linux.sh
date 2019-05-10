@@ -39,8 +39,9 @@ for p in $(parted --script $DEVICE print | awk '/^ / {print $1}'); do
 done
 
 # partitioning sd-card
-parted --script $DEVICE mkpart primary fat32 1MiB 100MiB
-parted --script $DEVICE mkpart primary ext4 100Mib 100%
+parted --script ${DEVICE} mkpart primary fat32 1MiB 100MiB
+parted --script ${DEVICE} mkpart primary ext4 100Mib 100%
+parted --script ${DEVICE} set 1 boot on
 
 # create file systems
 mkfs.vfat ${BOOT}
