@@ -9,6 +9,7 @@ DEVICE=/dev/sdb
 BOOT="${DEVICE}1"
 ROOT="${DEVICE}2"
 
+# Hostname/FQDN
 PI_HOSTNAME="dummy"
 PI_FQDN="dummy.trier.cryptic.systems"
 
@@ -19,6 +20,18 @@ TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
 # TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-3-latest.tar.gz
 TARBALL_SOURCE_SIG="${TARBALL_SOURCE}.sig"
 TARBALL_SIG_KEY="68B3537F39A313B3E574D06777193F152BDBE6A6"
+
+# Locale
+LOCALE=("LANG=de_DE.UTF-8")
+LOCALE_GEN=("de_DE.UTF-8 UTF-8" "en_US.UTF-8 UTF-8")
+
+# Timezone
+TIMEZONE=Europe/Berlin
+
+# Enable 1wire bus
+ENABLE_WIRE="false"
+
+#########################################################################################
 
 # download tar
 if [ ! -f ${TARBALL} ]; then
@@ -34,8 +47,8 @@ gpg --recv-keys ${TARBALL_SIG_KEY}
 gpg --verify ${TARBALL_SIG} ${TARBALL}
 
 # delete partitions on sd-card
-for p in $(parted --script $DEVICE print | awk '/^ / {print $1}'); do
-  parted --script $DEVICE rm $p
+for P in $(parted --script ${DEVICE} print | awk '/^ / {print $1}'); do
+  parted --script ${DEVICE} rm ${P}
 done
 
 # partitioning sd-card
@@ -85,10 +98,23 @@ cat > ./root/etc/fstab <<EOF
 UUID=${BOOT_UUID}                              /boot       vfat    defaults        0       0
 EOF
 
+# set locale.conf
+for L in ${LOCALE[@]}; do
+  echo ${L} >> ./root/etc/locale.conf
+done
+
+# set locale.gen
+for L in ${LOCALE_GEN[@]}; do
+  sed -i "s/#${L}/${L}/" ./root/etc/locale.gen
+done
+
+# set timezone
+ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
+
 # enable 1-wire interface
-# cat >> ./boot/config.txt <<EOF
-# dtoverlay=w1-gpio
-# EOF
+if [ ${ENABLE_WIRE} == "true" ];
+  echo "dtoverlay=w1-gpio" >> ./boot/config.txt
+fi
 
 # install ssh pub key
 mkdir ./root/root/.ssh -p
@@ -101,6 +127,11 @@ EOF
 chown root:root -R ./root/root/.ssh/authorized_keys
 chmod 640 ./root/root/.ssh/authorized_keys
 chmod 750 ./root/root/.ssh
+
+# configure SSH daemon
+sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
+sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin without-password/" ./root/etc/ssh/sshd_config
+sed -i "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/" ./root/etc/ssh/sshd_config
 
 # set hosts
 cat > ./root/etc/hosts <<EOF
@@ -165,12 +196,7 @@ alias duha='du -h --apparent-size'                                        # Show
 alias ghistory='history | grep'                                           # Shortcut to grep in history
 alias gpg-dane='gpg --auto-key-locate dane --trust-model always -ear'     # This is for a pipe to encrypt a file
 alias ipt='sudo iptables -L -n -v --line-numbers'                         # Show all iptable rules
-alias lss='smbtree -b -N'                                                 # List all samba shares as tree
 alias ports='ss -atun'                                                    # List all open ports from localhost
-alias pyg-json=''
-alias network-scan='sudo nmap -sP'                                        # Scan all Hosts in a network, exp. 192.168.178.0/24
-alias port-scan='sudo nmap -sS -O -v'                                     # Scan ports from a victim
-alias wanip='dig +short myip.opendns.com @resolver1.opendns.com A'        # List your own IPv4 WAN Address
 
 # Aliases for pacman
 alias iap='pacman --query --info'                                         # Pacman: Information-About-Package
