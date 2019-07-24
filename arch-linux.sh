@@ -10,8 +10,8 @@ BOOT="${DEVICE}1"
 ROOT="${DEVICE}2"
 
 # Hostname/FQDN
-PI_HOSTNAME="dummy"
-PI_FQDN="dummy.trier.cryptic.systems"
+PI_HOSTNAME="hades"
+PI_FQDN="hades.hellenthal.cryptic.systems"
 
 # Arch Linux Image
 TARBALL=ArchLinuxARM-rpi-latest.tar.gz
@@ -95,6 +95,7 @@ cat > ./root/etc/fstab <<EOF
 # See fstab(5) for details.
 
 # <file system>                             <dir>       <type>  <options>  <dump>   <pass>
+UUID=${ROOT_UUID}   /           ext4    defaults        0       0
 UUID=${BOOT_UUID}                              /boot       vfat    defaults        0       0
 EOF
 
@@ -112,9 +113,9 @@ done
 ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
 # enable 1-wire interface
-if [ ${ENABLE_WIRE} == "true" ];
-  echo "dtoverlay=w1-gpio" >> ./boot/config.txt
-fi
+#if [ ${ENABLE_WIRE} == "true" ];
+#  echo "dtoverlay=w1-gpio" >> ./boot/config.txt
+#fi
 
 # install ssh pub key
 mkdir ./root/root/.ssh -p
