@@ -1,11 +1,18 @@
 #!/bin/bash
 
+# Error handling
+# If any error occur, stop and exit immediately the bash.
 set -e
 
-# Device, define device for the new arch installation
+# DEVICE
+# Specifies the USB device on which the system is to be installed.
 DEVICE=/dev/sdb
 
-# boot and root partitions
+# BOOT/ROOT
+# Specifies the ROOT and BOOT partitions. It is important not to boot from the
+# ROOT partition, as the RaspberryPi3b+ can only boot from fat32 and therefore
+# the use of an ext4 or btrfs file system for the ROOT partition would not be
+# possible.
 BOOT="${DEVICE}1"
 ROOT="${DEVICE}2"
 
@@ -13,7 +20,10 @@ ROOT="${DEVICE}2"
 PI_HOSTNAME="hades"
 PI_FQDN="hades.hellenthal.cryptic.systems"
 
-# Arch Linux Image
+# TARBALL
+# Defines the HTTP source of the Arch Linux Archive and its signature file that
+# is required to verify the archive as well as its file name as it is to be
+# named locally on the file system later.
 TARBALL=ArchLinuxARM-rpi-latest.tar.gz
 TARBALL_SIG="${TARBALL}.sig"
 TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
@@ -21,15 +31,27 @@ TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
 TARBALL_SOURCE_SIG="${TARBALL_SOURCE}.sig"
 TARBALL_SIG_KEY="68B3537F39A313B3E574D06777193F152BDBE6A6"
 
-# Locale
+# LOCALE
+# Defines the locale include language
 LOCALE=("LANG=de_DE.UTF-8")
 LOCALE_GEN=("de_DE.UTF-8 UTF-8" "en_US.UTF-8 UTF-8")
 
-# Timezone
+# TIMEZONE
 TIMEZONE=Europe/Berlin
 
-# Enable 1wire bus
-ENABLE_WIRE="false"
+# I2C_BUS
+# If I2C_BUS is true, it's would be started at boot.
+I2C_BUS="false"
+
+# WIRE_BUS
+# If WIRE_BUS is true, it's would be started at boot.
+WIRE_BUS="false"
+
+# WPA_SUPPLICANT_CONF
+# If the host system contains a wpa_supplicant conf, this is stored on the new
+# system. The wpa_supplicant service for the WLAN interface wlan0 is activated
+# and systemd-networkd is set up.
+WPA_SUPPLICANT_CONF="/etc/wpa_supplicant/wpa_supplicant.conf"
 
 #########################################################################################
 
@@ -112,10 +134,26 @@ done
 # set timezone
 ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
-# enable 1-wire interface
-#if [ ${ENABLE_WIRE} == "true" ];
-#  echo "dtoverlay=w1-gpio" >> ./boot/config.txt
-#fi
+# copy wpa_supplicant.conf
+if [ -f ${WPA_SUPPLICANT_CONF} ]; then
+  # copy wpa_supplicant configuration
+  cp ${WPA_SUPPLICANT_CONF} ./root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+
+  # create systemd-networkd interface file
+  cat > ./root/etc/systemd/network/wlan0.network <<EOF
+[Match]
+Name=wlan0
+
+[Network]
+DHCP=yes
+
+[DHCP]
+RouteMetric=20
+EOF
+
+  # enable wpa_supplicant service
+  ln --symbolic --force --relative ./root/usr/lib/systemd/system/wpa_supplicant@.service ./root/etc/systemd/system/multi-user.target.wants/wpa_supplicant@wlan0.service
+fi
 
 # install ssh pub key
 mkdir ./root/root/.ssh -p
