@@ -51,15 +51,16 @@ WIRE_BUS="false"
 # If the host system contains a wpa_supplicant conf, this is stored on the new
 # system. The wpa_supplicant service for the WLAN interface wlan0 is activated
 # and systemd-networkd is set up.
-WPA_SUPPLICANT_CONF="/etc/wpa_supplicant/wpa_supplicant.conf"
+WPA_SUPPLICANT_CONF="/etc/wpa_supplicant/wpa_supplicant-wlp5s0.conf"
 
 #########################################################################################
 
-# download tar
+# download tarball
 if [ ! -f ${TARBALL} ]; then
   curl --location ${TARBALL_SOURCE} --output ${TARBALL}
 fi
 
+# download tarballs signature
 if [ ! -f ${TARBALL_SIG} ]; then
   curl --location ${TARBALL_SOURCE_SIG} --output ${TARBALL_SIG}
 fi
@@ -68,7 +69,7 @@ fi
 gpg --recv-keys ${TARBALL_SIG_KEY}
 gpg --verify ${TARBALL_SIG} ${TARBALL}
 
-# delete partitions on sd-card
+# delete partitions on sd-card if anyone exists
 for P in $(parted --script ${DEVICE} print | awk '/^ / {print $1}'); do
   parted --script ${DEVICE} rm ${P}
 done
@@ -86,30 +87,44 @@ mkfs.ext4 ${ROOT} -L root
 BOOT_UUID=$(blkid --match-tag UUID --output value ${BOOT})
 ROOT_UUID=$(blkid --match-tag UUID --output value ${ROOT})
 
-# mount file systems
+# create directory to mount boot partition
 if [ ! -d boot ]; then
   mkdir boot
 fi
 
+# create directory to mount root partition
 if [ ! -d root ]; then
   mkdir root
 fi
 
+# mount boot and root partition
 mount ${BOOT} ./boot
 mount ${ROOT} ./root
 
-# extract tar
+# extract tarball on root partition
 tar --extract --gunzip --same-permissions --directory="./root" --file ${TARBALL}
+
+# write all memory cached file states on disks
 sync
 
-# move bootloader
+# move bootloader into boot partition
 mv ./root/boot/* ./boot
 
-# override partition name with partition uuid to find root partition
+# replace boot partition name with uuid
 CMD=$(cat ./boot/cmdline.txt)
 cat > ./boot/cmdline.txt <<EOF
 root=UUID=${ROOT_UUID} $(echo ${CMD} | cut -d ' ' -f 2-)
 EOF
+
+# enable i2c-bus
+if [ ${I2C_BUS} == "true" ]; then
+  echo "dtparam=i2c_arm=on" >> ./boot/config.txt
+fi
+
+# enable wire-bus
+if [ ${WIRE_BUS} == "true" ]; then
+  echo "dtoverlay=w1-gpio" >> ./boot/config.txt
+fi
 
 # override fstab to mount boot partition with uuid
 cat > ./root/etc/fstab <<EOF
@@ -131,41 +146,14 @@ for L in ${LOCALE_GEN[@]}; do
   sed -i "s/#${L}/${L}/" ./root/etc/locale.gen
 done
 
+# Copy all configuration files into new system
+cp --no-dereference --preserve=all --recursive ./fs/. ./root
+
 # set timezone
 ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
-# copy wpa_supplicant.conf
-if [ -f ${WPA_SUPPLICANT_CONF} ]; then
-  # copy wpa_supplicant configuration
-  cp ${WPA_SUPPLICANT_CONF} ./root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf
-
-  # create systemd-networkd interface file
-  cat > ./root/etc/systemd/network/wlan0.network <<EOF
-[Match]
-Name=wlan0
-
-[Network]
-DHCP=yes
-
-[DHCP]
-RouteMetric=20
-EOF
-
-  # enable wpa_supplicant service
-  ln --symbolic --force --relative ./root/usr/lib/systemd/system/wpa_supplicant@.service ./root/etc/systemd/system/multi-user.target.wants/wpa_supplicant@wlan0.service
-fi
-
-# install ssh pub key
-mkdir ./root/root/.ssh -p
-cat > ./root/root/.ssh/authorized_keys <<EOF
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPOydCxv9/tAV7AdS2HsUIEu547Z5qUJnWYwiO7rI9YL
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUTcUBb+55jRY9TkpLgm8K/8nJfEXyjEX8zljdCCRpi
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVGxeVfkycwzP7UkLujGzDjC+9lPML45V7+bBmkKyD0
-EOF
-
-chown root:root -R ./root/root/.ssh/authorized_keys
-chmod 640 ./root/root/.ssh/authorized_keys
-chmod 750 ./root/root/.ssh
+# enable wpa_supplicant service
+ln --symbolic --force --relative ./root/usr/lib/systemd/system/wpa_supplicant@.service ./root/etc/systemd/system/multi-user.target.wants/wpa_supplicant@wlan0.service
 
 # configure SSH daemon
 sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
@@ -261,7 +249,7 @@ chmod 700 ./root/root/.config/gnupg
 chown root:root ./root/root/.config/gnupg
 
 # download gpg public keys
-gpg --homedir ./root/root/.config/gnupg --recv-keys 9B146D11A9ED6CA7E279EB1A852BCC170D81A982
+gpg --homedir ./root/root/.config/gnupg --auto-key-locate dane --verbose --locate-key markus.pesch@cryptic.systems
 
 # checkout after installation scripts
 mkdir ./root/root/workspace
