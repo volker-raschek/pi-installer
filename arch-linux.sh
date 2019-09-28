@@ -3,15 +3,15 @@
 set -e
 
 # Device, define device for the new arch installation
-DEVICE=/dev/sdb
+DEVICE=/dev/sdc
 
 # boot and root partitions
 BOOT="${DEVICE}1"
 ROOT="${DEVICE}2"
 
 # Hostname/FQDN
-PI_HOSTNAME="hades"
-PI_FQDN="hades.hellenthal.cryptic.systems"
+PI_HOSTNAME="poseidon"
+PI_FQDN="poseidon.trier.cryptic.systems"
 
 # Arch Linux Image
 TARBALL=ArchLinuxARM-rpi-latest.tar.gz
@@ -24,6 +24,8 @@ TARBALL_SIG_KEY="68B3537F39A313B3E574D06777193F152BDBE6A6"
 # Locale
 LOCALE=("LANG=de_DE.UTF-8")
 LOCALE_GEN=("de_DE.UTF-8 UTF-8" "en_US.UTF-8 UTF-8")
+
+VCONSOLE="de-latin1"
 
 # Timezone
 TIMEZONE=Europe/Berlin
@@ -109,6 +111,11 @@ for L in ${LOCALE_GEN[@]}; do
   sed -i "s/#${L}/${L}/" ./root/etc/locale.gen
 done
 
+# set vconsole
+cat > ./root/etc/vconsole.conf <<EOF
+KEYMAP=${VCONSOLE}
+EOF
+
 # set timezone
 ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
@@ -133,6 +140,7 @@ chmod 750 ./root/root/.ssh
 sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
 sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin without-password/" ./root/etc/ssh/sshd_config
 sed -i "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/" ./root/etc/ssh/sshd_config
+sed -i "s/#UseDNS no/UseDNS no/" ./root/etc/ssh/sshd_config
 
 # set hosts
 cat > ./root/etc/hosts <<EOF
@@ -231,7 +239,7 @@ git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspa
 
 # kill gpg-agent and dirmngr
 kill $(ps aux | grep dirmngr | awk '{print $2}')
-sudo kill $(ps aux | grep gpg-agent | awk '{print $2}')
+kill $(ps aux | grep gpg-agent | awk '{print $2}')
 
 # umount partitions and remove old files
 umount ${BOOT} ${ROOT}
