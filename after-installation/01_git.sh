@@ -546,8 +546,8 @@ sed -i 's#PS1=\x27\\u@\\h:\\w\\$ \x27#PS1=\x27\\u@\\h:\\w$(__git_ps1 \" (%s)\")\
 
 
 # Core-Settings
-git config --global core.eol lf
-[[ -f $(which vim) ]] && git config --global core.editor "vim -c 'set textwidth=72'"
+# git config --global core.eol lf
+# [[ -f $(which vim) ]] && git config --global core.editor "vim -c 'set textwidth=72'"
 
 # User-Settings
 git config --global user.name "${USER}"
