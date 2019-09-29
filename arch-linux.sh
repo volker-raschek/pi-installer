@@ -2,12 +2,15 @@
 
 set -e
 
-# Device, define device for the new arch installation
-DEVICE=/dev/sdc
-
-# boot and root partitions
-BOOT="${DEVICE}1"
-ROOT="${DEVICE}2"
+# NOTE:
+# Starting with raspberry pi 3+, the boot partition can be on the same device as
+# the root partition, because this model can boot from external devices such as
+# the sdcard. For older models the boot partition must be on a sdcard. The
+# variables below defines the device for the boot and root partition. If your
+# raspberry pi model is equal or greater than model 3+, use the same device to
+# create both partitions on it.
+BOOT_DEVICE=/dev/sdc
+ROOT_DEVICE=/dev/sdf
 
 # Hostname/FQDN
 PI_HOSTNAME="poseidon"
@@ -25,13 +28,22 @@ TARBALL_SIG_KEY="68B3537F39A313B3E574D06777193F152BDBE6A6"
 LOCALE=("LANG=de_DE.UTF-8")
 LOCALE_GEN=("de_DE.UTF-8 UTF-8" "en_US.UTF-8 UTF-8")
 
+# Keyboad language
 VCONSOLE="de-latin1"
 
 # Timezone
 TIMEZONE=Europe/Berlin
 
-# Enable 1wire bus
-ENABLE_WIRE="false"
+# Enable bus
+ENABLE_I2C="true"
+ENABLE_WIRE="true"
+
+# DNSSEC
+# Possible values:
+# - yes
+# - allow-downgrade
+# - no
+DNSSEC="no"
 
 #########################################################################################
 
@@ -48,15 +60,34 @@ fi
 gpg --recv-keys ${TARBALL_SIG_KEY}
 gpg --verify ${TARBALL_SIG} ${TARBALL}
 
-# delete partitions on sd-card
-for P in $(parted --script ${DEVICE} print | awk '/^ / {print $1}'); do
-  parted --script ${DEVICE} rm ${P}
+# define BOOT and ROOT_PARTITIONS
+if [ "${BOOT_DEVICE}" == "${ROOT_DEVICE}" ]; then
+  BOOT="${BOOT_DEVICE}1"
+  ROOT="${ROOT_DEVICE}2"
+else
+  BOOT="${BOOT_DEVICE}1"
+  ROOT="${ROOT_DEVICE}1"
+fi
+
+# delete partitions
+for P in $(parted --script ${BOOT_DEVICE} print | awk '/^ / {print $1}'); do
+  parted --script ${BOOT_DEVICE} rm ${P}
 done
 
-# partitioning sd-card
-parted --script ${DEVICE} mkpart primary fat32 1MiB 100MiB
-parted --script ${DEVICE} mkpart primary ext4 100Mib 100%
-parted --script ${DEVICE} set 1 boot on
+for P in $(parted --script ${ROOT_DEVICE} print | awk '/^ / {print $1}'); do
+  parted --script ${ROOT_DEVICE} rm ${P}
+done
+
+# partitioning
+if [ "${BOOT_DEVICE}" == "${ROOT_DEVICE}" ]; then
+  parted --script ${BOOT_DEVICE} mkpart primary fat32 1MiB 100MiB
+  parted --script ${ROOT_DEVICE} mkpart primary ext4 100Mib 100%
+  parted --script ${BOOT_DEVICE} set 1 boot on
+else
+  parted --script ${BOOT_DEVICE} mkpart primary fat32 0% 100%
+  parted --script ${ROOT_DEVICE} mkpart primary ext4 0% 100%
+  parted --script ${BOOT_DEVICE} set 1 boot on
+fi
 
 # create file systems
 mkfs.vfat ${BOOT}
@@ -80,7 +111,10 @@ mount ${ROOT} ./root
 
 # extract tar
 tar --extract --gunzip --same-permissions --directory="./root" --file ${TARBALL}
-sync
+
+# write cached files on disk
+sync --file-system ${BOOT_DEVICE}
+sync --file-system ${ROOT_DEVICE}
 
 # move bootloader
 mv ./root/boot/* ./boot
@@ -108,7 +142,7 @@ done
 
 # set locale.gen
 for L in ${LOCALE_GEN[@]}; do
-  sed -i "s/#${L}/${L}/" ./root/etc/locale.gen
+  sed --in-place "s/#${L}/${L}/" ./root/etc/locale.gen
 done
 
 # set vconsole
@@ -119,28 +153,39 @@ EOF
 # set timezone
 ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
+# DNSSEC
+sed --in-place "s/#DNSSEC=no/DNSSEC=${DNSSEC}/g" ./root/etc/systemd/resolved.conf
+
+# enable i2c bus interface
+if [ "${ENABLE_I2C}" == "true" ]; then
+ echo "dtparam=i2c_arm=on" >> ./boot/config.txt
+ echo "i2c-dev" >> ./root/etc/modules-load.d/raspberrypi.conf
+ echo "i2c-bcm2708" >> ./root/etc/modules-load.d/raspberrypi.conf
+fi
+
 # enable 1-wire interface
-#if [ ${ENABLE_WIRE} == "true" ];
-#  echo "dtoverlay=w1-gpio" >> ./boot/config.txt
-#fi
+if [ "${ENABLE_WIRE}" == "true" ]; then
+ echo "dtoverlay=w1-gpio" >> ./boot/config.txt
+fi
+
 
 # install ssh pub key
-mkdir ./root/root/.ssh -p
+mkdir --parents ./root/root/.ssh
 cat > ./root/root/.ssh/authorized_keys <<EOF
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPOydCxv9/tAV7AdS2HsUIEu547Z5qUJnWYwiO7rI9YL
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUTcUBb+55jRY9TkpLgm8K/8nJfEXyjEX8zljdCCRpi
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVGxeVfkycwzP7UkLujGzDjC+9lPML45V7+bBmkKyD0
 EOF
 
-chown root:root -R ./root/root/.ssh/authorized_keys
+chown root:root --recursive ./root/root/.ssh/authorized_keys
 chmod 640 ./root/root/.ssh/authorized_keys
 chmod 750 ./root/root/.ssh
 
 # configure SSH daemon
-sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
-sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin without-password/" ./root/etc/ssh/sshd_config
-sed -i "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/" ./root/etc/ssh/sshd_config
-sed -i "s/#UseDNS no/UseDNS no/" ./root/etc/ssh/sshd_config
+sed --in-place "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
+sed --in-place "s/#PermitRootLogin prohibit-password/PermitRootLogin without-password/" ./root/etc/ssh/sshd_config
+sed --in-place "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/" ./root/etc/ssh/sshd_config
+sed --in-place "s/#UseDNS no/UseDNS no/" ./root/etc/ssh/sshd_config
 
 # set hosts
 cat > ./root/etc/hosts <<EOF
@@ -190,21 +235,13 @@ export LESSKEY="${XDG_CONFIG_HOME}/less/lesskey"                          # less
 
 # Programm Settings
 export EDITOR="vim"                                                       # default editor (no full-screen)
-export GIT_PS1_SHOWDIRTYSTATE=" "                                         # Enable, if git shows in prompt staged (+) or unstaged(*) states
-export GIT_PS1_SHOWSTASHSTATE=" "                                         # Enable, if git shows in prompt stashed ($) states
-export GIT_PS1_SHOWUNTRACKEDFILES=" "                                     # Enable, if git shows in prompt untracked (%) states
-export GIT_PS1_SHOWUPSTREAM=" "                                           # Enable, if git shows in prompt behind(<), ahead(>) or diverges(<>) from upstream
 export PS1='\u@\h:\w\$ '                                                  # Bash prompt with git
 export VISUAL="vim"                                                       # default editor (full-screen)
 
 # General Aliases
 alias ..='cd ..'
 alias ...='cd ../..'
-alias cps='cp --sparse=never'                                             # copy paste files without sparse
-alias duha='du -h --apparent-size'                                        # Show real file size (sparse size)
 alias ghistory='history | grep'                                           # Shortcut to grep in history
-alias gpg-dane='gpg --auto-key-locate dane --trust-model always -ear'     # This is for a pipe to encrypt a file
-alias ipt='sudo iptables -L -n -v --line-numbers'                         # Show all iptable rules
 alias ports='ss -atun'                                                    # List all open ports from localhost
 
 # Aliases for pacman
@@ -218,12 +255,13 @@ alias rsp='pacman --remove --recursive --nosave'                          # Pacm
 EOF
 
 # create XDG-Specificantion-Based Directories
-mkdir -p ./root/root/.cache/less \
-         ./root/root/.config \
-         ./root/root/.config/gnupg \
-         ./root/root/.config/less \
-         ./root/root/.local/share \
-         ./root/root/.local/share/bash
+mkdir --parents \
+  ./root/root/.cache/less \
+  ./root/root/.config \
+  ./root/root/.config/gnupg \
+  ./root/root/.config/less \
+  ./root/root/.local/share \
+  ./root/root/.local/share/bash
 
 
 # set permissions for gnupg homedir
@@ -238,9 +276,9 @@ mkdir ./root/root/workspace
 git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
 
 # kill gpg-agent and dirmngr
-kill $(ps aux | grep dirmngr | awk '{print $2}')
-kill $(ps aux | grep gpg-agent | awk '{print $2}')
+kill $(ps aux | grep dirmngr | awk '{print $2}') || true
+kill $(ps aux | grep gpg-agent | awk '{print $2}') || true
 
 # umount partitions and remove old files
 umount ${BOOT} ${ROOT}
-rm -Rf ./boot ./root ${TARBALL} ${TARBALL_SIG}
+rm --recursive --force ./boot ./root ${TARBALL} ${TARBALL_SIG}
