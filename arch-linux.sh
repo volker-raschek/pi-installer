@@ -245,13 +245,14 @@ alias ghistory='history | grep'                                           # Shor
 alias ports='ss -atun'                                                    # List all open ports from localhost
 
 # Aliases for pacman
-alias iap='pacman --query --info'                                         # Pacman: Information-About-Package
-alias lao='pacman --query --deps --unrequired'                            # Pacman: List-All-Orphans
-alias uap='pacman --sync --refresh --sysupgrade'                          # Pacman: Update-All-Packages
-alias uld='pacman --sync --refresh'                                       # Pacman: Update-Local-Database
-alias rao='pacman --remove --nosave --recursive \
-           $(pacman --query --unrequired --deps --quiet) '                # Pacman: Remove-All-Orphans Packages
-alias rsp='pacman --remove --recursive --nosave'                          # Pacman: Remove-Single-Package
+alias piap='pacman --query --info'                                         # Pacman: Information-About-Package
+alias plao='pacman --query --deps --unrequired'                            # Pacman: List-All-Orphans
+alias plip='pacman --query --quiet --explicit'                             # Pacman: List-Information-Package
+alias puap='pacman --sync --refresh --sysupgrade'                          # Pacman: Update-All-Packages
+alias puld='pacman --sync --refresh'                                       # Pacman: Update-Local-Database
+alias prao='pacman --remove --nosave --recursive \
+           $(pacman --query --unrequired --deps --quiet)'                  # Pacman: Remove-All-Orphans Packages
+alias prsp='pacman --remove --recursive --nosave'                          # Pacman: Remove-Single-Package
 EOF
 
 # create XDG-Specificantion-Based Directories
