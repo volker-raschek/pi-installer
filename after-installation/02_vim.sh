@@ -2,6 +2,7 @@
 
 set -e
 
+pacman --sync --sysupgrade --refresh --noconfirm
 pacman --sync --noconfirm vim
 
 # Checkout the repository that contains the VIM configuration

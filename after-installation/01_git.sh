@@ -2,6 +2,7 @@
 
 set -e
 
+pacman --sync --sysupgrade --refresh --noconfirm
 pacman --sync --noconfirm git
 
 cat > ${XDG_DATA_HOME}/bash/git <<"EOF"
