@@ -26,7 +26,7 @@ pacman-key --lsign-key EC3CBE7F607D11E663149E811D1F0DC78F173680
 pacman --sync --refresh --sysupgrade --noconfirm
 
 # pacman: install pkgs
-pacman --sync --noconfirm bash-completion bind-tools pacman-contrib
+pacman --sync --noconfirm base-devel bash-completion bind-tools pacman-contrib
 
 # pacman: hooks directory
 mkdir /etc/pacman.d/hooks
