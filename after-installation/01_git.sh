@@ -563,3 +563,4 @@ git config --global alias.los "log --abbrev-commit --decorate --graph --histogra
 git config --global alias.loo "log --abbrev-commit --decorate --graph --histogram --all --oneline"
 git config --global alias.loos "log --abbrev-commit --decorate --graph --histogram --all --oneline --show-signature"
 git config --global alias.fixup "commit --amend --no-edit"
+git config --global color.ui auto
