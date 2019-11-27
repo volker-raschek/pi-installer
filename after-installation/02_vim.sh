@@ -14,5 +14,6 @@ if [ -f ${HOME}/.vimrc ]; then
   rm ${HOME}/.vimrc
 fi
 
-cd ${HOME}/workspace/vim
+cd ${HOME}/.vim
 git checkout -b no-plugins origin/no-plugins
+cd ${HOME}/workspace/pi-installer/after-installation
