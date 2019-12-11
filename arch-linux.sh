@@ -9,8 +9,8 @@ set -e
 # variables below defines the device for the boot and root partition. If your
 # raspberry pi model is equal or greater than model 3+, use the same device to
 # create both partitions on it.
-BOOT_DEVICE=/dev/sdc
-ROOT_DEVICE=/dev/sdf
+BOOT_DEVICE=/dev/sdd
+ROOT_DEVICE=/dev/sdd
 
 # Hostname/FQDN
 PI_HOSTNAME="poseidon"
@@ -277,8 +277,8 @@ mkdir ./root/root/workspace
 git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
 
 # kill gpg-agent and dirmngr
-kill $(ps aux | grep dirmngr | awk '{print $2}') || true
-kill $(ps aux | grep gpg-agent | awk '{print $2}') || true
+# kill $(ps aux | grep dirmngr | awk '{print $2}') || true
+# kill $(ps aux | grep gpg-agent | awk '{print $2}') || true
 
 # umount partitions and remove old files
 umount ${BOOT} ${ROOT}
