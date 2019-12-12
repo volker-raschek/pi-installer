@@ -25,8 +25,8 @@ cat >> /etc/pacman.conf <<EOF
 [cs_any]
 Server = https://arch.cryptic.systems/any/
 
-[cs_armv7h]
-Server = https://arch.cryptic.systems/$arch/
+[cs_armv7]
+Server = https://arch.cryptic.systems/armv7/
 EOF
 
 # pacman: hooks directory
