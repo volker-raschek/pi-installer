@@ -552,7 +552,7 @@ sed -i 's#PS1=\x27\\u@\\h:\\w\\$ \x27#PS1=\x27\\u@\\h:\\w$(__git_ps1 \" (%s)\")\
 
 # User-Settings
 git config --global user.name "${USER}"
-git config --global user.email "${USER}@$(hostname -f)"
+git config --global user.email "${USER}@$(hostname)"
 
 # Help-Settings
 git config --global help.autocorrect 10

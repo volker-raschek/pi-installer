@@ -13,14 +13,13 @@ BOOT_DEVICE=/dev/sdd
 ROOT_DEVICE=/dev/sdd
 
 # Hostname/FQDN
-PI_HOSTNAME="poseidon"
-PI_FQDN="poseidon.trier.cryptic.systems"
+PI_HOSTNAME="tartaros"
 
 # Arch Linux Image
-TARBALL=ArchLinuxARM-rpi-latest.tar.gz
+TARBALL=ArchLinuxARM-rpi-4-latest.tar.gz
 TARBALL_SIG="${TARBALL}.sig"
-TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
-# TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-3-latest.tar.gz
+# TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
+TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-3-latest.tar.gz
 TARBALL_SOURCE_SIG="${TARBALL_SOURCE}.sig"
 TARBALL_SIG_KEY="68B3537F39A313B3E574D06777193F152BDBE6A6"
 
@@ -169,18 +168,6 @@ if [ "${ENABLE_WIRE}" == "true" ]; then
 fi
 
 
-# install ssh pub key
-mkdir --parents ./root/root/.ssh
-cat > ./root/root/.ssh/authorized_keys <<EOF
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPOydCxv9/tAV7AdS2HsUIEu547Z5qUJnWYwiO7rI9YL
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUTcUBb+55jRY9TkpLgm8K/8nJfEXyjEX8zljdCCRpi
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVGxeVfkycwzP7UkLujGzDjC+9lPML45V7+bBmkKyD0
-EOF
-
-chown root:root --recursive ./root/root/.ssh/authorized_keys
-chmod 640 ./root/root/.ssh/authorized_keys
-chmod 750 ./root/root/.ssh
-
 # configure SSH daemon
 sed --in-place "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
 sed --in-place "s/#PermitRootLogin prohibit-password/PermitRootLogin without-password/" ./root/etc/ssh/sshd_config
@@ -191,7 +178,7 @@ sed --in-place "s/#UseDNS no/UseDNS no/" ./root/etc/ssh/sshd_config
 cat > ./root/etc/hosts <<EOF
 127.0.0.1       localdomain.localhost localhost
 ::1             localdomain.localhost localhost
-127.0.1.1       ${PI_FQDN} ${PI_HOSTNAME}
+127.0.1.1       ${PI_HOSTNAME}
 EOF
 
 # set hostname
@@ -270,7 +257,7 @@ chmod 700 ./root/root/.config/gnupg
 chown root:root ./root/root/.config/gnupg
 
 # download gpg public keys
-gpg --homedir ./root/root/.config/gnupg --recv-keys 9B146D11A9ED6CA7E279EB1A852BCC170D81A982
+# gpg --homedir ./root/root/.config/gnupg --recv-keys 9B146D11A9ED6CA7E279EB1A852BCC170D81A982
 
 # checkout after installation scripts
 mkdir ./root/root/workspace

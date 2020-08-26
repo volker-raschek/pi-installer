@@ -23,10 +23,10 @@ cat >> /etc/pacman.conf <<EOF
 # - https://github.com/volker-raschek
 # - https://git.cryptic.systems/volker.raschek
 [cs_any]
-Server = https://arch.cryptic.systems/any/
+Server = https://aur.cryptic.systems/any/
 
 [cs_armv7]
-Server = https://arch.cryptic.systems/armv7/
+Server = https://aut.cryptic.systems/$arch/
 EOF
 
 # pacman: hooks directory
