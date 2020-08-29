@@ -3,7 +3,7 @@
 set -e
 
 pacman --sync --sysupgrade --refresh --noconfirm
-pacman --sync --noconfirm git
+pacman --sync --noconfirm git inetutils
 
 cat > ${XDG_DATA_HOME}/bash/git <<"EOF"
 # bash/zsh git prompt support

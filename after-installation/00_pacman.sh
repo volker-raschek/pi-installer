@@ -19,14 +19,11 @@ pacman --sync --noconfirm base-devel bash-completion bind-tools pacman-contrib
 # pacman: add repositories
 cat >> /etc/pacman.conf <<EOF
 
-# A repo for Volker Raschek's own projects:
-# - https://github.com/volker-raschek
-# - https://git.cryptic.systems/volker.raschek
 [cs_any]
 Server = https://aur.cryptic.systems/any/
 
 [cs_armv7]
-Server = https://aut.cryptic.systems/$arch/
+Server = https://aur.cryptic.systems/armv7/
 EOF
 
 # pacman: hooks directory
@@ -48,4 +45,4 @@ Exec = /usr/bin/paccache --remove --verbose --keep 3
 EOF
 
 # pacman: enable hooks
-sed -i -E 's@^#(HookDir.*)@\1@' /etc/pacman.conf
+sed --in-place --regexp-extended 's@^#(HookDir.*)@\1@' /etc/pacman.conf
