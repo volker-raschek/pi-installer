@@ -16,12 +16,14 @@ ROOT_DEVICE=/dev/sdd
 PI_HOSTNAME="tartaros"
 
 # Arch Linux Image
-TARBALL=ArchLinuxARM-rpi-4-latest.tar.gz
-TARBALL_SIG="${TARBALL}.sig"
-# TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
-TARBALL_SOURCE=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-3-latest.tar.gz
-TARBALL_SOURCE_SIG="${TARBALL_SOURCE}.sig"
-TARBALL_SIG_KEY="68B3537F39A313B3E574D06777193F152BDBE6A6"
+SOURCES=(
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz.sig
+)
+
+SIG_KEYS=(
+  68B3537F39A313B3E574D06777193F152BDBE6A6
+)
 
 # Locale
 LOCALE=("LANG=de_DE.UTF-8")
@@ -46,18 +48,18 @@ DNSSEC="no"
 
 #########################################################################################
 
-# download tar
-if [ ! -f ${TARBALL} ]; then
-  curl --location ${TARBALL_SOURCE} --output ${TARBALL}
-fi
-
-if [ ! -f ${TARBALL_SIG} ]; then
-  curl --location ${TARBALL_SOURCE_SIG} --output ${TARBALL_SIG}
-fi
+# download sources
+for SOURCE in ${SOURCES[@]}; do
+  if [ ! -f $(basename ${SOURCE}) ]; then
+    curl --location ${SOURCE} --output $(basename ${SOURCE})
+  fi
+done
 
 # download gpg signing keys and verify tarball
-gpg --recv-keys ${TARBALL_SIG_KEY}
-gpg --verify ${TARBALL_SIG} ${TARBALL}
+for SIG_KEY in ${SIG_KEYS}; do
+  gpg --recv-keys ${SIG_KEY}
+  gpg --verify $(basename ${SOURCES[1]}) $(basename ${SOURCES[0]})
+done
 
 # define BOOT and ROOT_PARTITIONS
 if [ "${BOOT_DEVICE}" == "${ROOT_DEVICE}" ]; then
@@ -67,6 +69,11 @@ else
   BOOT="${BOOT_DEVICE}1"
   ROOT="${ROOT_DEVICE}1"
 fi
+
+# unmount if mounted
+for mount in {boot,root}; do
+  umount ${mount} || true
+done
 
 # delete partitions
 for P in $(parted --script ${BOOT_DEVICE} print | awk '/^ / {print $1}'); do
@@ -109,7 +116,7 @@ mount ${BOOT} ./boot
 mount ${ROOT} ./root
 
 # extract tar
-tar --extract --gunzip --same-permissions --directory="./root" --file ${TARBALL}
+tar --extract --gzip --same-permissions --directory="./root" --file $(basename ${SOURCES[0]})
 
 # write cached files on disk
 sync --file-system ${BOOT_DEVICE}
@@ -244,6 +251,7 @@ EOF
 
 # create XDG-Specificantion-Based Directories
 mkdir --parents \
+  ./root/etc/pacman.d/gnupg \
   ./root/root/.cache/less \
   ./root/root/.config \
   ./root/root/.config/gnupg \
@@ -252,21 +260,23 @@ mkdir --parents \
   ./root/root/.local/share/bash
 
 
-# set permissions for gnupg homedir
+# set gnupg homedir
 chmod 700 ./root/root/.config/gnupg
 chown root:root ./root/root/.config/gnupg
 
-# download gpg public keys
-# gpg --homedir ./root/root/.config/gnupg --recv-keys 9B146D11A9ED6CA7E279EB1A852BCC170D81A982
+cat > ./root/root/.config/gnupg/gpg.conf <<EOF
+keyserver hkp://pool.sks-keyservers.net
+keyserver-options timeout=10
+EOF
+
+cat >> ./root/etc/pacman.d/gnupg/gpg.conf <<EOF
+keyserver hkp://pool.sks-keyservers.net
+EOF
 
 # checkout after installation scripts
 mkdir ./root/root/workspace
-git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
-
-# kill gpg-agent and dirmngr
-# kill $(ps aux | grep dirmngr | awk '{print $2}') || true
-# kill $(ps aux | grep gpg-agent | awk '{print $2}') || true
+# git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
 
 # umount partitions and remove old files
 umount ${BOOT} ${ROOT}
-rm --recursive --force ./boot ./root ${TARBALL} ${TARBALL_SIG}
+rm --recursive --force ./boot ./root
