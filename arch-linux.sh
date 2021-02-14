@@ -9,11 +9,11 @@ set -e
 # variables below defines the device for the boot and root partition. If your
 # raspberry pi model is equal or greater than model 3+, use the same device to
 # create both partitions on it.
-BOOT_DEVICE=/dev/sdd
-ROOT_DEVICE=/dev/sdd
+BOOT_DEVICE=/dev/sdb
+ROOT_DEVICE=/dev/sdb
 
 # Hostname/FQDN
-PI_HOSTNAME="tartaros"
+PI_HOSTNAME="hades"
 
 # Arch Linux Image
 SOURCES=(
@@ -71,8 +71,8 @@ else
 fi
 
 # unmount if mounted
-for mount in {boot,root}; do
-  umount ${mount} || true
+for fs in {"./root/boot","./root"}; do
+  umount ${fs} || true
 done
 
 # delete partitions
@@ -99,35 +99,31 @@ fi
 mkfs.vfat ${BOOT}
 mkfs.ext4 ${ROOT} -L root
 
+# check filesystem
+fsck.vfat -vy ${BOOT}
+fsck.ext4 -vy ${ROOT}
+
 # read partition UUIDs
 BOOT_UUID=$(blkid --match-tag UUID --output value ${BOOT})
 ROOT_UUID=$(blkid --match-tag UUID --output value ${ROOT})
 
 # mount file systems
-if [ ! -d boot ]; then
-  mkdir boot
-fi
-
-if [ ! -d root ]; then
-  mkdir root
-fi
-
-mount ${BOOT} ./boot
+mkdir ./root || true
 mount ${ROOT} ./root
+mkdir ./root/boot || true
+mount ${BOOT} ./root/boot
 
 # extract tar
-tar --extract --gzip --same-permissions --directory="./root" --file $(basename ${SOURCES[0]})
+# tar --extract --gzip --same-permissions --file $(basename ${SOURCES[0]}) --directory="./root"
+bsdtar --extract --preserve-permissions --file $(basename ${SOURCES[0]}) --directory="./root"
 
 # write cached files on disk
 sync --file-system ${BOOT_DEVICE}
 sync --file-system ${ROOT_DEVICE}
 
-# move bootloader
-mv ./root/boot/* ./boot
-
 # override partition name with partition uuid to find root partition
-CMD=$(cat ./boot/cmdline.txt)
-cat > ./boot/cmdline.txt <<EOF
+CMD=$(cat ./root/boot/cmdline.txt)
+cat > ./root/boot/cmdline.txt <<EOF
 root=UUID=${ROOT_UUID} $(echo ${CMD} | cut -d ' ' -f 2-)
 EOF
 
@@ -164,22 +160,22 @@ sed --in-place "s/#DNSSEC=no/DNSSEC=${DNSSEC}/g" ./root/etc/systemd/resolved.con
 
 # enable i2c bus interface
 if [ "${ENABLE_I2C}" == "true" ]; then
- echo "dtparam=i2c_arm=on" >> ./boot/config.txt
+ echo "dtparam=i2c_arm=on" >> ./root/boot/config.txt
  echo "i2c-dev" >> ./root/etc/modules-load.d/raspberrypi.conf
  echo "i2c-bcm2708" >> ./root/etc/modules-load.d/raspberrypi.conf
 fi
 
 # enable 1-wire interface
 if [ "${ENABLE_WIRE}" == "true" ]; then
- echo "dtoverlay=w1-gpio" >> ./boot/config.txt
+ echo "dtoverlay=w1-gpio" >> ./root/boot/config.txt
 fi
 
 
 # configure SSH daemon
-sed --in-place "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
-sed --in-place "s/#PermitRootLogin prohibit-password/PermitRootLogin without-password/" ./root/etc/ssh/sshd_config
-sed --in-place "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/" ./root/etc/ssh/sshd_config
-sed --in-place "s/#UseDNS no/UseDNS no/" ./root/etc/ssh/sshd_config
+# sed --in-place "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
+# sed --in-place "s/#PermitRootLogin prohibit-password/PermitRootLogin without-password/" ./root/etc/ssh/sshd_config
+# sed --in-place "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/" ./root/etc/ssh/sshd_config
+# sed --in-place "s/#UseDNS no/UseDNS no/" ./root/etc/ssh/sshd_config
 
 # set hosts
 cat > ./root/etc/hosts <<EOF
@@ -279,4 +275,4 @@ mkdir ./root/root/workspace
 
 # umount partitions and remove old files
 umount ${BOOT} ${ROOT}
-rm --recursive --force ./boot ./root
+rm --recursive --force ./root
