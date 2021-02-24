@@ -9,8 +9,8 @@ set -e
 # variables below defines the device for the boot and root partition. If your
 # raspberry pi model is equal or greater than model 3+, use the same device to
 # create both partitions on it.
-BOOT_DEVICE=/dev/sdb
-ROOT_DEVICE=/dev/sdb
+BOOT_DEVICE=/dev/sde
+ROOT_DEVICE=/dev/sde
 
 # Hostname/FQDN
 PI_HOSTNAME="hades"
@@ -38,13 +38,6 @@ TIMEZONE=Europe/Berlin
 # Enable bus
 ENABLE_I2C="true"
 ENABLE_WIRE="true"
-
-# DNSSEC
-# Possible values:
-# - yes
-# - allow-downgrade
-# - no
-DNSSEC="no"
 
 #########################################################################################
 
@@ -155,9 +148,6 @@ EOF
 # set timezone
 ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
-# DNSSEC
-sed --in-place "s/#DNSSEC=no/DNSSEC=${DNSSEC}/g" ./root/etc/systemd/resolved.conf
-
 # enable i2c bus interface
 if [ "${ENABLE_I2C}" == "true" ]; then
  echo "dtparam=i2c_arm=on" >> ./root/boot/config.txt
@@ -254,7 +244,6 @@ mkdir --parents \
   ./root/root/.config/less \
   ./root/root/.local/share \
   ./root/root/.local/share/bash
-
 
 # set gnupg homedir
 chmod 700 ./root/root/.config/gnupg
