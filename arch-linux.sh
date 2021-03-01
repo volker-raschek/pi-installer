@@ -258,6 +258,34 @@ cat >> ./root/etc/pacman.d/gnupg/gpg.conf <<EOF
 keyserver hkp://pool.sks-keyservers.net
 EOF
 
+# wlan
+mkdir ./root/etc/wpa_supplicant
+cat > ./root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf <<EOF
+ctrl_interface=/var/run/wpa_supplicant
+ctrl_interface_group=wheel
+update_config=1
+eapol_version=1
+ap_scan=1
+fast_reauth=1
+
+# Brigitte und Kurt Pesch
+# Hohenbergringstraße 167
+# 53940 Hellenthal
+network={
+  ssid="SSID"
+  psk="PSK"
+}
+EOF
+chmod 640 ./root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+
+cat > ./root/etc/systemd/network/wlan0.conf <<EOF
+[Match]
+Name=wlan0
+
+[Network]
+DHCP=yes
+EOF
+
 # checkout after installation scripts
 mkdir ./root/root/workspace
 # git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
