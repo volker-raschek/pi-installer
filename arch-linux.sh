@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 # NOTE:
 # Starting with raspberry pi 3+, the boot partition can be on the same device as
@@ -13,12 +13,15 @@ BOOT_DEVICE=/dev/sde
 ROOT_DEVICE=/dev/sde
 
 # Hostname/FQDN
-PI_HOSTNAME="hades"
+PI_HOSTNAME="node-00-arm64-trier"
 
 # Arch Linux Image
 SOURCES=(
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz.sig
+  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
+  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz.sig
+
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz.sig
 )
 
 SIG_KEYS=(
@@ -48,11 +51,11 @@ for SOURCE in ${SOURCES[@]}; do
   fi
 done
 
-# download gpg signing keys and verify tarball
-for SIG_KEY in ${SIG_KEYS}; do
-  gpg --recv-keys ${SIG_KEY}
-  gpg --verify $(basename ${SOURCES[1]}) $(basename ${SOURCES[0]})
-done
+# # download gpg signing keys and verify tarball
+# for SIG_KEY in ${SIG_KEYS}; do
+#   gpg --recv-keys ${SIG_KEY}
+#   gpg --verify $(basename ${SOURCES[1]}) $(basename ${SOURCES[0]})
+# done
 
 # define BOOT and ROOT_PARTITIONS
 if [ "${BOOT_DEVICE}" == "${ROOT_DEVICE}" ]; then
@@ -148,12 +151,12 @@ EOF
 # set timezone
 ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
-# enable i2c bus interface
-if [ "${ENABLE_I2C}" == "true" ]; then
- echo "dtparam=i2c_arm=on" >> ./root/boot/config.txt
- echo "i2c-dev" >> ./root/etc/modules-load.d/raspberrypi.conf
- echo "i2c-bcm2708" >> ./root/etc/modules-load.d/raspberrypi.conf
-fi
+# # enable i2c bus interface
+# if [ "${ENABLE_I2C}" == "true" ]; then
+#  echo "dtparam=i2c_arm=on" >> ./root/boot/config.txt
+#  echo "i2c-dev" >> ./root/etc/modules-load.d/raspberrypi.conf
+#  echo "i2c-bcm2708" >> ./root/etc/modules-load.d/raspberrypi.conf
+# fi
 
 # enable 1-wire interface
 if [ "${ENABLE_WIRE}" == "true" ]; then
