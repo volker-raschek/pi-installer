@@ -271,9 +271,6 @@ eapol_version=1
 ap_scan=1
 fast_reauth=1
 
-# Brigitte und Kurt Pesch
-# Hohenbergringstraße 167
-# 53940 Hellenthal
 network={
   ssid="SSID"
   psk="PSK"
