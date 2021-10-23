@@ -85,8 +85,8 @@ done
 
 # partitioning
 if [ "${BOOT_DEVICE}" == "${ROOT_DEVICE}" ]; then
-  parted --script ${BOOT_DEVICE} mkpart primary fat32 1MiB 100MiB
-  parted --script ${ROOT_DEVICE} mkpart primary ext4 100Mib 100%
+  parted --script ${BOOT_DEVICE} mkpart primary fat32 1MiB 2GiB
+  parted --script ${ROOT_DEVICE} mkpart primary ext4 2Gib 100%
   parted --script ${BOOT_DEVICE} set 1 boot on
 else
   parted --script ${BOOT_DEVICE} mkpart primary fat32 0% 100%
