@@ -13,15 +13,18 @@ BOOT_DEVICE=/dev/sde
 ROOT_DEVICE=/dev/sde
 
 # Hostname/FQDN
-PI_HOSTNAME="node-00-arm64-trier"
+PI_HOSTNAME="rhea"
 
 # Arch Linux Image
 SOURCES=(
   # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
   # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz.sig
 
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz.sig
+  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
+  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz.sig
+
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-aarch64-latest.tar.gz
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-aarch64-latest.tar.gz.sig
 )
 
 SIG_KEYS=(
@@ -118,10 +121,10 @@ sync --file-system ${BOOT_DEVICE}
 sync --file-system ${ROOT_DEVICE}
 
 # override partition name with partition uuid to find root partition
-CMD=$(cat ./root/boot/cmdline.txt)
-cat > ./root/boot/cmdline.txt <<EOF
-root=UUID=${ROOT_UUID} $(echo ${CMD} | cut -d ' ' -f 2-)
-EOF
+# CMD=$(cat ./root/boot/cmdline.txt)
+# cat > ./root/boot/cmdline.txt <<EOF
+# root=UUID=${ROOT_UUID} $(echo ${CMD} | cut -d ' ' -f 2-)
+# EOF
 
 # override fstab to mount boot partition with uuid
 cat > ./root/etc/fstab <<EOF
@@ -262,7 +265,7 @@ keyserver hkp://pool.sks-keyservers.net
 EOF
 
 # wlan
-mkdir ./root/etc/wpa_supplicant
+mkdir ./root/etc/wpa_supplicant || true
 cat > ./root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf <<EOF
 ctrl_interface=/var/run/wpa_supplicant
 ctrl_interface_group=wheel
