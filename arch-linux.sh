@@ -116,11 +116,10 @@ bsdtar --extract --preserve-permissions --file $(basename ${SOURCES[0]}) --direc
 sync --file-system ${BOOT_DEVICE}
 sync --file-system ${ROOT_DEVICE}
 
-# override partition name with partition uuid to find root partition
-# CMD=$(cat ./root/boot/cmdline.txt)
-# cat > ./root/boot/cmdline.txt <<EOF
-# root=UUID=${ROOT_UUID} $(echo ${CMD} | cut -d ' ' -f 2-)
-# EOF
+
+# add module
+sed --in-place --regexp-extended 's/^MODULES=\((.*)\)/MODULES=(\1,pcie_brcmstb)/' /etc/mkinitcpio.conf
+
 
 # override fstab to mount boot partition with uuid
 cat > ./root/etc/fstab <<EOF
