@@ -9,11 +9,11 @@ set -ex
 # variables below defines the device for the boot and root partition. If your
 # raspberry pi model is equal or greater than model 3+, use the same device to
 # create both partitions on it.
-BOOT_DEVICE=/dev/sda
-ROOT_DEVICE=/dev/sda
+BOOT_DEVICE=/dev/sdd
+ROOT_DEVICE=/dev/sdd
 
 # Hostname/FQDN
-PI_HOSTNAME="thaumas"
+PI_HOSTNAME="rpi3-aarch-installer"
 
 # Arch Linux Image
 SOURCES=(
@@ -116,10 +116,9 @@ bsdtar --extract --preserve-permissions --file $(basename ${SOURCES[0]}) --direc
 sync --file-system ${BOOT_DEVICE}
 sync --file-system ${ROOT_DEVICE}
 
-
-# add module
-sed --in-place --regexp-extended 's/^MODULES=\((.*)\)/MODULES=(\1,pcie_brcmstb)/' /etc/mkinitcpio.conf
-
+# add module, otherwise can not be booted from usb
+# https://archlinuxarm.org/forum/viewtopic.php?f=67&t=14756
+sed --in-place --regexp-extended 's/^MODULES=\(\)/MODULES=(pcie_brcmstb)/' ./root/etc/mkinitcpio.conf
 
 # override fstab to mount boot partition with uuid
 cat > ./root/etc/fstab <<EOF
