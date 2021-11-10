@@ -13,15 +13,15 @@ BOOT_DEVICE=/dev/sde
 ROOT_DEVICE=/dev/sde
 
 # Hostname/FQDN
-PI_HOSTNAME="node-00-arm64-trier"
+PI_HOSTNAME="poseidon"
 
 # Arch Linux Image
 SOURCES=(
-  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
-  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz.sig
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz.sig
 
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz.sig
+  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
+  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz.sig
 )
 
 SIG_KEYS=(
@@ -262,7 +262,7 @@ keyserver hkp://pool.sks-keyservers.net
 EOF
 
 # wlan
-mkdir ./root/etc/wpa_supplicant
+mkdir ./root/etc/wpa_supplicant || true
 cat > ./root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf <<EOF
 ctrl_interface=/var/run/wpa_supplicant
 ctrl_interface_group=wheel
