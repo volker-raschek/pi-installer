@@ -9,8 +9,8 @@ set -ex
 # variables below defines the device for the boot and root partition. If your
 # raspberry pi model is equal or greater than model 3+, use the same device to
 # create both partitions on it.
-BOOT_DEVICE=/dev/sde
-ROOT_DEVICE=/dev/sde
+BOOT_DEVICE=/dev/sda
+ROOT_DEVICE=/dev/sda
 
 # Hostname/FQDN
 PI_HOSTNAME="thaumas"
