@@ -13,15 +13,15 @@ BOOT_DEVICE=/dev/sde
 ROOT_DEVICE=/dev/sde
 
 # Hostname/FQDN
-PI_HOSTNAME="poseidon"
+PI_HOSTNAME="archlinux-aarch64-002"
 
 # Arch Linux Image
 SOURCES=(
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz.sig
+  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
+  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz.sig
 
-  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
-  # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz.sig
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
+  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz.sig
 )
 
 SIG_KEYS=(
@@ -151,30 +151,10 @@ EOF
 # set timezone
 ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
-# # enable i2c bus interface
-# if [ "${ENABLE_I2C}" == "true" ]; then
-#  echo "dtparam=i2c_arm=on" >> ./root/boot/config.txt
-#  echo "i2c-dev" >> ./root/etc/modules-load.d/raspberrypi.conf
-#  echo "i2c-bcm2708" >> ./root/etc/modules-load.d/raspberrypi.conf
-# fi
-
-# enable 1-wire interface
-if [ "${ENABLE_WIRE}" == "true" ]; then
- echo "dtoverlay=w1-gpio" >> ./root/boot/config.txt
-fi
-
-
-# configure SSH daemon
-# sed --in-place "s/#PasswordAuthentication yes/PasswordAuthentication no/" ./root/etc/ssh/sshd_config
-# sed --in-place "s/#PermitRootLogin prohibit-password/PermitRootLogin without-password/" ./root/etc/ssh/sshd_config
-# sed --in-place "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/" ./root/etc/ssh/sshd_config
-# sed --in-place "s/#UseDNS no/UseDNS no/" ./root/etc/ssh/sshd_config
-
 # set hosts
 cat > ./root/etc/hosts <<EOF
 127.0.0.1       localdomain.localhost localhost
 ::1             localdomain.localhost localhost
-127.0.1.1       ${PI_HOSTNAME}
 EOF
 
 # set hostname
@@ -185,57 +165,6 @@ EOF
 # default bash_profile for login-shells
 cat > ./root/root/.bash_profile <<EOF
 [[ -f ~/.bashrc ]] && . ~/.bashrc
-EOF
-
-# default bashrc used for sub-shells
-cat > ./root/root/.bashrc <<"EOF"
-#  ~/.bashrc
-#
-
-# If not running interactively, don't do anything
- [[ $- != *i* ]] && return
-
-# Bash settings
-shopt -s globstar                                                         # activate globstar option
-shopt -s histappend                                                       # activate append history
-
-# XDG Base Directory
-export XDG_CONFIG_HOME="${HOME}/.config"                                  # FreeDesktop - config directory for programms
-export XDG_CACHE_HOME="${HOME}/.cache"                                    # FreeDesktop - cache directory for programms
-export XDG_DATA_HOME="${HOME}/.local/share"                               # FreeDesktop - home directory of programm data
-
-# Sources
-[ -f "${XDG_DATA_HOME}/bash/git" ] && source "${XDG_DATA_HOME}/bash/git"  # git bash-completion and prompt functions
-
-# XDG Base Directory Configs
-export GNUPGHOME="${XDG_CONFIG_HOME}/gnupg"                               # gpg (home dir)
-export HISTCONTROL="ignoreboth"                                           # Don't put duplicate lines or starting with spaces in the history
-export HISTSIZE="1000"                                                    # Max lines in bash history # Append 2000 lines after closing sessions
-export HISTFILE="${XDG_DATA_HOME}/bash/history"                           # Location of bash history file
-export HISTFILESIZE="2000"                                                # Max lines in bash history
-export LESSHISTFILE="${XDG_CACHE_HOME}/less/history"                      # less history (home dir)
-export LESSKEY="${XDG_CONFIG_HOME}/less/lesskey"                          # less
-
-# Programm Settings
-export EDITOR="vim"                                                       # default editor (no full-screen)
-export PS1='\u@\h:\w\$ '                                                  # Bash prompt with git
-export VISUAL="vim"                                                       # default editor (full-screen)
-
-# General Aliases
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ghistory='history | grep'                                           # Shortcut to grep in history
-alias ports='ss -atun'                                                    # List all open ports from localhost
-
-# Aliases for pacman
-alias piap='pacman --query --info'                                         # Pacman: Information-About-Package
-alias plao='pacman --query --deps --unrequired'                            # Pacman: List-All-Orphans
-alias plip='pacman --query --quiet --explicit'                             # Pacman: List-Information-Package
-alias puap='pacman --sync --refresh --sysupgrade'                          # Pacman: Update-All-Packages
-alias puld='pacman --sync --refresh'                                       # Pacman: Update-Local-Database
-alias prao='pacman --remove --nosave --recursive \
-           $(pacman --query --unrequired --deps --quiet)'                  # Pacman: Remove-All-Orphans Packages
-alias prsp='pacman --remove --recursive --nosave'                          # Pacman: Remove-Single-Package
 EOF
 
 # create XDG-Specificantion-Based Directories
@@ -260,35 +189,6 @@ EOF
 cat >> ./root/etc/pacman.d/gnupg/gpg.conf <<EOF
 keyserver hkp://pool.sks-keyservers.net
 EOF
-
-# wlan
-mkdir ./root/etc/wpa_supplicant || true
-cat > ./root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf <<EOF
-ctrl_interface=/var/run/wpa_supplicant
-ctrl_interface_group=wheel
-update_config=1
-eapol_version=1
-ap_scan=1
-fast_reauth=1
-
-network={
-  ssid="SSID"
-  psk="PSK"
-}
-EOF
-chmod 640 ./root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf
-
-cat > ./root/etc/systemd/network/wlan0.conf <<EOF
-[Match]
-Name=wlan0
-
-[Network]
-DHCP=yes
-EOF
-
-# checkout after installation scripts
-mkdir ./root/root/workspace
-# git clone https://github.com/volker-raschek/pi-installer.git ./root/root/workspace/pi-installer
 
 # umount partitions and remove old files
 umount ${BOOT} ${ROOT}
