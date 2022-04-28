@@ -9,11 +9,11 @@ set -ex
 # variables below defines the device for the boot and root partition. If your
 # raspberry pi model is equal or greater than model 3+, use the same device to
 # create both partitions on it.
-BOOT_DEVICE=/dev/sdd
-ROOT_DEVICE=/dev/sdd
+BOOT_DEVICE=/dev/sde
+ROOT_DEVICE=/dev/sde
 
 # Hostname/FQDN
-PI_HOSTNAME="rpi3-aarch-installer"
+PI_HOSTNAME="archlinux-aarch64-002"
 
 # Arch Linux Image
 SOURCES=(
@@ -23,8 +23,8 @@ SOURCES=(
   # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
   # http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz.sig
 
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-aarch64-latest.tar.gz
-  http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-aarch64-latest.tar.gz.sig
+  http://de4.mirror.archlinuxarm.org/os/ArchLinuxARM-rpi-aarch64-latest.tar.gz
+  http://de4.mirror.archlinuxarm.org/os/ArchLinuxARM-rpi-aarch64-latest.tar.gz.sig
 )
 
 SIG_KEYS=(
