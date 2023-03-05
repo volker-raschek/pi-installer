@@ -186,9 +186,14 @@ BOOT_UUID=$(${BLKID_BIN} --match-tag UUID --output value ${BOOT})
 ROOT_UUID=$(${BLKID_BIN} --match-tag UUID --output value ${ROOT})
 
 # mount file systems
-${MKDIR_BIN} ./root || true
+if [ ! -d ./root ]; then
+  ${MKDIR_BIN} ./root
+fi
 ${MOUNT_BIN} ${ROOT} ./root
-${MKDIR_BIN} ./root/boot || true
+
+if [ ! -d ./root/boot ]; then
+  ${MKDIR_BIN} ./root/boot
+fi
 ${MOUNT_BIN} ${BOOT} ./root/boot
 
 # extract tar
