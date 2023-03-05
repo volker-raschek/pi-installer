@@ -2,6 +2,74 @@
 
 set -e
 
+# BASENAME_BIN
+# Absolute path to the basename binary.
+BASENAME_BIN=${BASENAME_BIN:-$(which basename)}
+
+# BLKID_BIN
+# Absolute path to the blkid binary.
+BLKID_BIN=${BLKID_BIN:-$(which blkid)}
+
+# BSDTAR_BIN
+# Absolute path to the bsdtar binary.
+BSDTAR_BIN=${BSDTAR_BIN:-$(which bsdtar)}
+
+# CAT_BIN
+# Absolute path to the cat binary.
+CAT_BIN=${CAT_BIN:-$(which cat)}
+
+# CHMOD_BIN
+# Absolute path to the chmod binary.
+CHMOD_BIN=${CHMOD_BIN:-$(which chmod)}
+
+# CHOWN_BIN
+# Absolute path to the chown binary.
+CHOWN_BIN=${CHOWN_BIN:-$(which chown)}
+
+# CURL_BIN
+# Absolute path to the curk binary.
+CURL_BIN=${CURL_BIN:-$(which curl)}
+
+# FSCK_EXT4_BIN
+# Absolute path to the fsck.ext4 binary.
+FSCK_EXT4_BIN=${FSCK_EXT4_BIN:-$(which fsck.ext4)}
+
+# FSCK_VFAT_BIN
+# Absolute path to the fsck.vfat binary.
+FSCK_VFAT_BIN=${FSCK_VFAT_BIN:-$(which fsck.vfat)}
+
+# MKDIR_BIN
+# Absolute path to the mkdir binary.
+MKDIR_BIN=${MKDIR_BIN:-$(which mkdir)}
+
+# MKFS_EXT4_BIN
+# Absolute path to the mkfs.ext4 binary.
+MKFS_EXT4_BIN=${MKFS_EXT4_BIN:-$(which mkfs.ext4)}
+
+# MKFS_VFAT_BIN
+# Absolute path to the mkfs.vfat binary.
+MKFS_VFAT_BIN=${MKFS_VFAT_BIN:-$(which mkfs.vfat)}
+
+# MOUNT_BIN
+# Absolute path to the mount binary.
+MOUNT_BIN=${MOUNT_BIN:-$(which mount)}
+
+# PARTED_BIN
+# Absolute path to the parted binary.
+PARTED_BIN=${PARTED_BIN:-$(which parted)}
+
+# SED_BIN
+# Absolute path to the sed binary.
+SED_BIN=${SED_BIN:-$(which sed)}
+
+# SYNC_BIN
+# Absolute path to the sync binary.
+SYNC_BIN=${SYNC_BIN:-$(which sync)}
+
+# UMOUNT_BIN
+# Absolute path to the mount binary.
+UMOUNT_BIN=${UMOUNT_BIN:-$(which umount)}
+
 # NOTE:
 # Starting with raspberry pi 3+, the boot partition can be on the same device as
 # the root partition, because this model can boot from external devices such as
@@ -52,15 +120,15 @@ SIG_KEYS=(
 
 # download sources
 for SOURCE in ${SOURCES[@]}; do
-  if [ ! -f $(basename ${SOURCE}) ]; then
-    curl --location ${SOURCE} --output $(basename ${SOURCE})
+  if [ ! -f $(${BASENAME_BIN} ${SOURCE}) ]; then
+    ${CURL_BIN} --location ${SOURCE} --output $(${BASENAME_BIN} ${SOURCE})
   fi
 done
 
 # # download gpg signing keys and verify tarball
 # for SIG_KEY in ${SIG_KEYS}; do
 #   gpg --recv-keys ${SIG_KEY}
-#   gpg --verify $(basename ${SOURCES[1]}) $(basename ${SOURCES[0]})
+#   gpg --verify $(${BASENAME_BIN} ${SOURCES[1]}) $(${BASENAME_BIN} ${SOURCES[0]})
 # done
 
 # define BOOT and ROOT_PARTITIONS
@@ -73,60 +141,58 @@ else
 fi
 
 # unmount if mounted
-for fs in {"./root/boot","./root"}; do
-  umount ${fs} || true
-done
+${UMOUNT_BIN} -r ${ROOT}
 
 # delete partitions
-for P in $(parted --script ${BOOT_DEVICE} print | awk '/^ / {print $1}'); do
-  parted --script ${BOOT_DEVICE} rm ${P}
+for P in $(${PARTED_BIN} --script ${BOOT_DEVICE} print | awk '/^ / {print $1}'); do
+  ${PARTED_BIN} --script ${BOOT_DEVICE} rm ${P}
 done
 
-for P in $(parted --script ${ROOT_DEVICE} print | awk '/^ / {print $1}'); do
-  parted --script ${ROOT_DEVICE} rm ${P}
+for P in $(${PARTED_BIN} --script ${ROOT_DEVICE} print | awk '/^ / {print $1}'); do
+  ${PARTED_BIN} --script ${ROOT_DEVICE} rm ${P}
 done
 
 # partitioning
 if [ "${BOOT_DEVICE}" == "${ROOT_DEVICE}" ]; then
-  parted --script ${BOOT_DEVICE} mkpart primary fat32 1MiB 2GiB
-  parted --script ${ROOT_DEVICE} mkpart primary ext4 2Gib 100%
-  parted --script ${BOOT_DEVICE} set 1 boot on
+  ${PARTED_BIN} --script ${BOOT_DEVICE} mkpart primary fat32 1MiB 2GiB
+  ${PARTED_BIN} --script ${ROOT_DEVICE} mkpart primary ext4 2Gib 100%
+  ${PARTED_BIN} --script ${BOOT_DEVICE} set 1 boot on
 else
-  parted --script ${BOOT_DEVICE} mkpart primary fat32 0% 100%
-  parted --script ${ROOT_DEVICE} mkpart primary ext4 0% 100%
-  parted --script ${BOOT_DEVICE} set 1 boot on
+  ${PARTED_BIN} --script ${BOOT_DEVICE} mkpart primary fat32 0% 100%
+  ${PARTED_BIN} --script ${ROOT_DEVICE} mkpart primary ext4 0% 100%
+  ${PARTED_BIN} --script ${BOOT_DEVICE} set 1 boot on
 fi
 
 # create file systems
-mkfs.vfat ${BOOT}
-mkfs.ext4 ${ROOT} -L root
+${MKFS_VFAT_BIN} ${BOOT}
+${MKFS_EXT4_BIN} ${ROOT} -L root
 
 # check filesystem
-fsck.vfat -vy ${BOOT}
-fsck.ext4 -vy ${ROOT}
+${FSCK_VFAT_BIN} -vy ${BOOT}
+${FSCK_EXT4_BIN} -vy ${ROOT}
 
 # read partition UUIDs
-BOOT_UUID=$(blkid --match-tag UUID --output value ${BOOT})
-ROOT_UUID=$(blkid --match-tag UUID --output value ${ROOT})
+BOOT_UUID=$(${BLKID_BIN} --match-tag UUID --output value ${BOOT})
+ROOT_UUID=$(${BLKID_BIN} --match-tag UUID --output value ${ROOT})
 
 # mount file systems
-mkdir ./root || true
-mount ${ROOT} ./root
-mkdir ./root/boot || true
-mount ${BOOT} ./root/boot
+${MKDIR_BIN} ./root || true
+${MOUNT_BIN} ${ROOT} ./root
+${MKDIR_BIN} ./root/boot || true
+${MOUNT_BIN} ${BOOT} ./root/boot
 
 # extract tar
-# tar --extract --gzip --same-permissions --file $(basename ${SOURCES[0]}) --directory="./root"
-bsdtar --extract --preserve-permissions --file $(basename ${SOURCES[0]}) --directory="./root"
+# tar --extract --gzip --same-permissions --file $(${BASENAME_BIN} ${SOURCES[0]}) --directory="./root"
+${BSDTAR_BIN} --extract --preserve-permissions --file $(${BASENAME_BIN} ${SOURCES[0]}) --directory="./root"
 
 # write cached files on disk
-sync --file-system ${BOOT_DEVICE}
-sync --file-system ${ROOT_DEVICE}
+${SYNC_BIN} --file-system ${BOOT_DEVICE}
+${SYNC_BIN} --file-system ${ROOT_DEVICE}
 
 # NOTE: Enable initramfs module pci_brcmstb if BOOT_ON_USB_SSD is true.
 if [ ${BOOT_ON_USB_SSD} == "TRUE" ]; then
-  sed --in-place --regexp-extended 's/^MODULES=\(\)/MODULES=(pcie_brcmstb)/' ./root/etc/mkinitcpio.conf
-  cat > /dev/stdout <<EOF
+  ${SED_BIN} --in-place --regexp-extended 's/^MODULES=\(\)/MODULES=(pcie_brcmstb)/' ./root/etc/mkinitcpio.conf
+  ${CAT_BIN} > /dev/stdout <<EOF
 WARNING: ArchLinux ARM will not boot without manual intervention!
 
 You enabled BOOT_ON_USB_SSD. The initramfs module pcie_brcmstb is
@@ -139,7 +205,7 @@ EOF
 fi
 
 # override fstab to mount boot partition with uuid
-cat > ./root/etc/fstab <<EOF
+${CAT_BIN} > ./root/etc/fstab <<EOF
 # Static information about the filesystems.
 # See fstab(5) for details.
 
@@ -149,23 +215,23 @@ UUID=${BOOT_UUID}                              /boot       vfat    defaults     
 EOF
 
 # set hosts
-cat > ./root/etc/hosts <<EOF
+${CAT_BIN} > ./root/etc/hosts <<EOF
 127.0.0.1       localdomain.localhost localhost
 ::1             localdomain.localhost localhost
 EOF
 
 # set hostname
-cat > ./root/etc/hostname <<EOF
+${CAT_BIN} > ./root/etc/hostname <<EOF
 ${PI_HOSTNAME}
 EOF
 
 # default bash_profile for login-shells
-cat > ./root/root/.bash_profile <<EOF
+${CAT_BIN} > ./root/root/.bash_profile <<EOF
 [[ -f ~/.bashrc ]] && . ~/.bashrc
 EOF
 
 # create XDG-Specificantion-Based Directories
-mkdir --parents \
+${MKDIR_BIN} --parents \
   ./root/etc/pacman.d/gnupg \
   ./root/root/.cache/less \
   ./root/root/.config \
@@ -175,12 +241,11 @@ mkdir --parents \
   ./root/root/.local/share/bash \
   ./root/root/.ssh
 
-chown root:root \
+${CHOWN_BIN} root:root \
   ./root/root/.ssh
 
-chmod 0700 \
+${CHMOD_BIN} 0700 \
   ./root/root/.ssh
 
-# umount partitions and remove old files
-# umount ${BOOT} ${ROOT}
-# rm --recursive --force ./root
+# umount partitions
+# ${UMOUNT_BIN} -r ${ROOT}
