@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 # NOTE:
 # Starting with raspberry pi 3+, the boot partition can be on the same device as
@@ -9,8 +9,18 @@ set -ex
 # variables below defines the device for the boot and root partition. If your
 # raspberry pi model is equal or greater than model 3+, use the same device to
 # create both partitions on it.
-BOOT_DEVICE=/dev/sde
-ROOT_DEVICE=/dev/sde
+BOOT_DEVICE=/dev/sdf
+ROOT_DEVICE=/dev/sdf
+
+# Set this property to 'TRUE' if your boot partition is location on an external
+# SSD drive connected via USB.
+#
+# Background: To boot from an external SSD drive connected via USB is an
+# additional module durning the boot of linux kernel by initramfs required. The
+# initramfs can not be generated via this installation script and must be done
+# manually!
+# https://archlinuxarm.org/forum/viewtopic.php?f=67&t=14756
+BOOT_ON_USB_SSD="FALSE"
 
 # FIXME: AFTER INSTALLING UPDATE INITRAMFS, OTHERWISE CAN NOT BE THE EXTERNAL
 # PARTITION ON A USB DEVICE BE FOUND!
@@ -20,7 +30,7 @@ ROOT_DEVICE=/dev/sde
 # 4. EXECUTE mkinitcpio -p
 
 # Hostname/FQDN
-PI_HOSTNAME="archlinux-aarch64-002"
+PI_HOSTNAME="archlinux-aarch64-000"
 
 # Arch Linux Image
 SOURCES=(
@@ -37,16 +47,6 @@ SOURCES=(
 SIG_KEYS=(
   68B3537F39A313B3E574D06777193F152BDBE6A6
 )
-
-# Locale
-LOCALE=("LANG=de_DE.UTF-8")
-LOCALE_GEN=("de_DE.UTF-8 UTF-8" "en_US.UTF-8 UTF-8")
-
-# Keyboad language
-VCONSOLE="de-latin1"
-
-# Timezone
-TIMEZONE=Europe/Berlin
 
 #########################################################################################
 
@@ -123,9 +123,20 @@ bsdtar --extract --preserve-permissions --file $(basename ${SOURCES[0]}) --direc
 sync --file-system ${BOOT_DEVICE}
 sync --file-system ${ROOT_DEVICE}
 
-# add module, otherwise can not be booted from usb
-# https://archlinuxarm.org/forum/viewtopic.php?f=67&t=14756
-sed --in-place --regexp-extended 's/^MODULES=\(\)/MODULES=(pcie_brcmstb)/' ./root/etc/mkinitcpio.conf
+# NOTE: Enable initramfs module pci_brcmstb if BOOT_ON_USB_SSD is true.
+if [ ${BOOT_ON_USB_SSD} == "TRUE" ]; then
+  sed --in-place --regexp-extended 's/^MODULES=\(\)/MODULES=(pcie_brcmstb)/' ./root/etc/mkinitcpio.conf
+  cat > /dev/stdout <<EOF
+WARNING: ArchLinux ARM will not boot without manual intervention!
+
+You enabled BOOT_ON_USB_SSD. The initramfs module pcie_brcmstb is
+not part of the current initramfs. This can lead to boot failures
+until the initramfs has been successfully generates with the module
+manually.
+
+https://archlinuxarm.org/forum/viewtopic.php?f=67&t=14756
+EOF
+fi
 
 # override fstab to mount boot partition with uuid
 cat > ./root/etc/fstab <<EOF
@@ -136,24 +147,6 @@ cat > ./root/etc/fstab <<EOF
 UUID=${ROOT_UUID}   /           ext4    defaults        0       0
 UUID=${BOOT_UUID}                              /boot       vfat    defaults        0       0
 EOF
-
-# set locale.conf
-for L in ${LOCALE[@]}; do
-  echo ${L} >> ./root/etc/locale.conf
-done
-
-# set locale.gen
-for L in ${LOCALE_GEN[@]}; do
-  sed --in-place "s/#${L}/${L}/" ./root/etc/locale.gen
-done
-
-# set vconsole
-cat > ./root/etc/vconsole.conf <<EOF
-KEYMAP=${VCONSOLE}
-EOF
-
-# set timezone
-ln --symbolic --force --relative ./root/usr/share/zoneinfo/Europe/Berlin ./root/etc/localtime
 
 # set hosts
 cat > ./root/etc/hosts <<EOF
@@ -180,7 +173,14 @@ mkdir --parents \
   ./root/root/.config/less \
   ./root/root/.local/share \
   ./root/root/.local/share/bash
+  ./root/root/.ssh
+
+chown root:root \
+  ./root/root/.ssh
+
+chmod 0700 \
+  ./root/root/.ssh
 
 # umount partitions and remove old files
-umount ${BOOT} ${ROOT}
-rm --recursive --force ./root
+# umount ${BOOT} ${ROOT}
+# rm --recursive --force ./root
