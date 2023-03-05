@@ -30,6 +30,10 @@ CHOWN_BIN=${CHOWN_BIN:-$(which chown)}
 # Absolute path to the curk binary.
 CURL_BIN=${CURL_BIN:-$(which curl)}
 
+# FINDMNT_BIN
+# Absolute path to the findmnt binary.
+FINDMNT_BIN=${FINDMNT_BIN:-$(which findmnt)}
+
 # FSCK_EXT4_BIN
 # Absolute path to the fsck.ext4 binary.
 FSCK_EXT4_BIN=${FSCK_EXT4_BIN:-$(which fsck.ext4)}
@@ -141,7 +145,13 @@ else
 fi
 
 # unmount if mounted
-${UMOUNT_BIN} -r ${ROOT}
+if ${FINDMNT_BIN} ${BOOT} > /dev/null; then
+  ${UMOUNT_BIN} ${BOOT}
+fi
+
+if ${FINDMNT_BIN} ${ROOT} > /dev/null; then
+  ${UMOUNT_BIN} ${ROOT}
+fi
 
 # delete partitions
 for P in $(${PARTED_BIN} --script ${BOOT_DEVICE} print | awk '/^ / {print $1}'); do
