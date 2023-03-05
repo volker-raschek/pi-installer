@@ -172,7 +172,7 @@ mkdir --parents \
   ./root/root/.config/gnupg \
   ./root/root/.config/less \
   ./root/root/.local/share \
-  ./root/root/.local/share/bash
+  ./root/root/.local/share/bash \
   ./root/root/.ssh
 
 chown root:root \
